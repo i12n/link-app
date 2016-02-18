@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <link rel='stylesheet' href='/stylesheets/bootstrap.min.css' />
+    <link rel='stylesheet' href='/stylesheets/style.css' />
+
+    <title><%= title %></title>
+
+  </head>
+
+  <body>
+
+    <nav class="navbar navbar-inverse navbar-fixed-top">
+      <div class="container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="#">Project name</a>
+        </div>
+        <div id="navbar" class="collapse navbar-collapse">
+          <ul class="nav navbar-nav">
+            <li class="active"><a href="#">Home</a></li>
+            <li><a href="#about">About</a></li>
+            <li><a href="#contact">Contact</a></li>
+          </ul>
+        </div><!--/.nav-collapse -->
+      </div>
+    </nav>
+
+    <div class="container">
+        <div class="col-md-8 left">
+            <div class="top-box">
+                <form> 
+                    <div class="row">
+                        <div class="col-md-8">
+                            <label class="sr-only" for="linkInput">Link</label>
+                            <input type="text" class="form-control" id="linkInput" placeholder="Paste a link here">
+                            <input type="hidden" id="linkUrl">
+                        </div>
+                        <div class="col-md-4">
+                            <button type="submit" class="btn btn-primary" id="linkEnter">>></button>
+                        </div>
+                    </div>
+                    <div id="submitLinkWrap"></div>
+                </form>
+            </div>
+            <div class="middle-box">
+                <div>
+                <% for(var i = 0; i < data.length; i++) { %>
+                   <div data-id="<%= data[i].id %>" class="tile">
+                     <a href="<%= data[i].url %>" target="_blank"><%= data[i].title %></a>
+                     <p> <%= data[i].description %> </p>
+                   </div>
+                <% } %>
+                </div>
+            </div>
+            <div class="bottom-box">
+            <% if (before) { %>
+                <a class="btn btn-default" href="/?before=<%= before %>">previous</a>
+            <% } %>
+            <% if (after) { %>
+                <a class="btn btn-default" href="/?after=<%=after%>">next</a>
+            <% } %>
+            </div>
+        </div>
+        <div class="col-md-4 right">
+        </div>
+    </div><!-- /.container -->
+
+    <script type="text/javascript" src="/javascripts/jquery-1.12.0.min.js"></script>
+    <script>
+        $(function(){
+            var ndLinkEnter = $('#linkEnter');
+            ndLinkEnter.click(function(){
+                var ndLinkInput =  $('#linkInput');
+                var link = ndLinkInput.val();
+                if (!link) {
+                    return false;
+                }
+                $.ajax({
+                    url:'/title',
+                    method:'POST',
+                    dataType:'json',
+                    data:{'link':link},
+                    success:function(result) {
+                        data = result['data'] && result['data']['link'];
+                        if (data) {
+                            renderLinkWrap(data);
+                            ndLinkEnter.hide();
+                        }
+                    },
+                    error:function() {alert(11);}
+
+                })
+                return false;
+            });
+            function renderLinkWrap(data) {
+                if (data) {
+                    var html = [
+                        '<div class="row">',
+                            '<div class="col-md-8">',
+                                '<textarea class="form-control" rows="3" id="titleText">',data['description'],'</textarea>',
+                            '</div>',
+                        '</div>',
+                        '<div class="row">',
+                            '<div class="col-md-8">',
+                                '<button type="submit" class="btn btn-primary" id="cancelSubmit">取消</button>',
+                                '<button type="submit" class="btn btn-primary" id="linkSubmit">提交</button>',
+                            '</div>',
+                        '</div>'
+                    ].join('');
+                    console.log(html);
+
+                    $('#submitLinkWrap').html(html);
+
+                    var ndLinkInput =  $('#linkInput');
+                    var ndLinkUrl = $('#linkUrl');
+                    if (data['title'] != '') {
+                        ndLinkInput.val(data['title'])
+                    }
+                    ndLinkUrl.val(data['url']);
+
+                    $('#cancelSubmit').click(function(){
+                        $('#submitLinkWrap').html('');
+                        $('#linkInput').val('');
+                        $('#linkEnter').show();
+                    });
+
+                    $('#linkSubmit').click(function(){
+                        var link = $('#linkUrl').val(),
+                            title = $('#linkInput').val(),
+                            description = $('#titleText').val();
+                        
+                        $.ajax({
+                            url:'/',
+                            method:'POST',
+                            dataType:'json',
+                            data:{'link':link, 'title': title, 'description': description},
+                            success:function(result) {
+                                data = result['data'] && result['data']['link'];
+                            },
+                            error:function() {alert(11);}
+
+                        });
+                        return false;
+                    });
+                }
+            }
+        });
+    </script>
+
+  </body>
+</html>
